@@ -9,3 +9,4 @@ Developed by Group 5 (WAD1 FINALS)
 
 php -S localhost:8000
 http://localhost:8000/config/setup_db.php
+http://localhost:8000/backend/read.php?what=data

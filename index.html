@@ -933,7 +933,7 @@
     }
     async function checkSession() {
       try {
-        const res = await fetch('backend/api.php?action=check_session');
+        const res = await fetch('backend/check_session.php');
         const d = await res.json();
         setAuth(!!d.logged_in);
       } catch (e) { setAuth(false); }
