@@ -258,7 +258,7 @@
 
   /* ---------- Fetch Live API Statistics (With Sample Data Fallback) ---------- */
   function fetchStatsAndRender() {
-    fetch('backend/api.php?action=get_stats')
+      fetch('backend/read.php?what=stats')
       .then(function (res) {
         if (!res.ok) throw new Error("API status: " + res.status);
         return res.json();

@@ -909,7 +909,7 @@
     // Fetch data from PHP (requires a logged-in session)
     async function loadData() {
       try {
-        const response = await fetch('backend/api.php?action=get_data');
+        const response = await fetch('backend/read.php?what=data');
         if (response.status === 401) { setAuth(false); return; }
         const data = await response.json();
         if (!data.success) throw new Error(data.error || 'Request failed');
@@ -1030,9 +1030,7 @@ document.getElementById("entry-donor").addEventListener("change", syncEntryDonor
       if (!confirm("Delete " + id + "? This cannot be undone.")) return;
 
       try {
-        const response = await fetch(`backend/api.php?action=delete_${type}&id=${id}`, {
-          method: 'POST' // or 'DELETE'
-        });
+          const response = await fetch("backend/delete.php?type=" + type + "&id=" + encodeURIComponent(id), { method: "POST" });
         
         const result = await response.json();
         if (result.success) {
@@ -1050,12 +1048,12 @@ document.getElementById("entry-donor").addEventListener("change", syncEntryDonor
         e.preventDefault();
         const type = f.dataset.type;      // "entry", "donor" or "bag"
         const mode = f.dataset.mode;      // "new" or "edit"
-        const action = type === "entry" ? "add_entry" : "edit_" + type;
+        const url = type === "entry" ? "backend/create.php" : "backend/update.php?type=" + type;
         const formData = new FormData(f);
         if (mode === "edit" && editing) formData.append("id", editing.id);
 
         try {
-          const response = await fetch("backend/api.php?action=" + action, { method: "POST", body: formData });
+          const response = await fetch(url, { method: "POST", body: formData });
           if (response.status === 401) { setAuth(false); return; }
           const result = await response.json();
           if (!result.success) { toast(result.error || "Error saving entry."); return; }
