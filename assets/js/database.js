@@ -3,7 +3,7 @@
 
   var TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   var COMPS = ["Red cells", "Plasma", "Platelets"];
-  var STATUSES = ["Stored", "Testing"];
+  var STATUSES = ["Stored", "Testing", "Expired", "Used"];
   var MONTHS = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 
   var CONFIGS = [
