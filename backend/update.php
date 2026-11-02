@@ -26,8 +26,8 @@ switch ($kind) {
         if (!donorExists($pdo, $donorId)) fail('Donor not found.', 404);
 
         $st = $pdo->prepare('UPDATE blood_bags
-                             SET donor_id = ?, component = ?, status = ?, collection_date = ?, expiry_date = ?
-                             WHERE id = ? AND is_deleted = 0');
+                            SET donor_id = ?, component = ?, status = ?, collection_date = ?, expiry_date = ?
+                            WHERE id = ? AND is_deleted = 0');
         $st->execute([$donorId, $comp, $status, $date, expiry_for($comp, $date), $id]);
         if ($st->rowCount() === 0) fail('Bag not found.', 404);
 

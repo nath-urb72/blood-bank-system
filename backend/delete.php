@@ -9,6 +9,7 @@ require_post();
 $kind = $_GET['type'] ?? '';
 $id   = numId($_POST['id'] ?? $_GET['id'] ?? '');
 
+// DETERMINE WHAT TO DELETE (DONOR OR BAG) AND PERFORM THE SOFT DELETE
 switch ($kind) {
 
     case 'donor':

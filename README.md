@@ -1,17 +1,4 @@
-# BLOOD BANK SYSTEM
-
-Developed by Group 5 (WAD1 FINALS)
-  > Agustin, Rilen Nicole
-  > Del Rosario, Dan Carlo
-  > Galang, Maria Trifina
-  > Santiago, Krizel Jasmine
-  > Urbano, Nathaniel
-
-php -S localhost:8000
-http://localhost:8000/config/setup_db.php
-http://localhost:8000/backend/read.php?what=data
-
-# Blood Bank System
+# BLOOD BANK
 
 A Blood Donation Inventory System for tracking donors and donated blood bags.
 
@@ -52,7 +39,7 @@ No separate database server is needed. The SQLite database file is created autom
 
 2. **Start the PHP built-in server:**
 
-   ```bash
+   ```
    php -S localhost:8000
    ```
 
@@ -83,11 +70,11 @@ No separate database server is needed. The SQLite database file is created autom
 ### Troubleshooting
 
 - **"Could not reach the server":** make sure `php -S localhost:8000` is still running in your terminal.
-- **"Database connection failed" or "could not find driver":** enable the `pdo_sqlite` extension in your `php.ini`.
+- **"Database connection failed" or "could not find driver":** enable(uncomment) the `pdo_sqlite` extension in your `php.ini`.
 - **"Forbidden" on the setup page:** open it through `localhost` on the same computer that runs the server.
 - **Port 8000 is already in use:** start the server on another port (for example `php -S localhost:8080`) and use that port in the URLs above.
 
-## Project Structure
+## Project Structure Guide
 
 ```
 blood-management-system/

@@ -1,5 +1,5 @@
 <?php
-// backend/read.php: ALL read operations
+// backend/read.php: ALL read operations (MAINLY FOR THE DASHBOARD)
 //   read.php?what=data   -> donors + bags (for the tables)
 //   read.php?what=stats  -> dashboard statistics
 require_once __DIR__ . '/bootstrap.php';
@@ -8,13 +8,14 @@ expire_old_bags($pdo);
 
 $what = $_GET['what'] ?? '';
 
+// DETERMINE WHAT TO READ FROM THE DATABASE
 switch ($what) {
 
     case 'data':
         $donorRows = $pdo->query("
             SELECT d.id, d.name, d.blood_type,
-                   (SELECT MAX(b.collection_date) FROM blood_bags b
-                     WHERE b.donor_id = d.id AND b.is_deleted = 0) AS last_donation
+                (SELECT MAX(b.collection_date) FROM blood_bags b
+                WHERE b.donor_id = d.id AND b.is_deleted = 0) AS last_donation
             FROM donors d WHERE d.is_deleted = 0 ORDER BY d.id DESC")->fetchAll();
 
         $donors = array_map(fn($d) => [
@@ -45,14 +46,14 @@ switch ($what) {
         $components = array_fill_keys(COMPONENTS, 0);
 
         foreach ($pdo->query("SELECT d.blood_type AS k, COUNT(*) AS n
-                              FROM blood_bags b JOIN donors d ON d.id = b.donor_id
-                              WHERE b.status = 'Stored' AND b.is_deleted = 0
-                              GROUP BY d.blood_type") as $r) {
+                            FROM blood_bags b JOIN donors d ON d.id = b.donor_id
+                            WHERE b.status = 'Stored' AND b.is_deleted = 0
+                            GROUP BY d.blood_type") as $r) {
             $types[$r['k']] = (int) $r['n'];
         }
         foreach ($pdo->query("SELECT component AS k, COUNT(*) AS n FROM blood_bags
-                              WHERE status = 'Stored' AND is_deleted = 0
-                              GROUP BY component") as $r) {
+                            WHERE status = 'Stored' AND is_deleted = 0
+                            GROUP BY component") as $r) {
             $components[$r['k']] = (int) $r['n'];
         }
         $total = (int) $pdo->query('SELECT COUNT(*) FROM blood_bags WHERE is_deleted = 0')->fetchColumn();
