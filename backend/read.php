@@ -57,7 +57,15 @@ switch ($what) {
         }
         $total = (int) $pdo->query('SELECT COUNT(*) FROM blood_bags WHERE is_deleted = 0')->fetchColumn();
 
-        respond(['success' => true, 'types' => $types, 'components' => $components, 'total' => $total]);
+        $statuses = array_fill_keys(STATUSES, 0);
+        foreach ($pdo->query('SELECT status AS k, COUNT(*) AS n FROM blood_bags
+                            WHERE is_deleted = 0 GROUP BY status') as $r) {
+            $statuses[$r['k']] = (int) $r['n'];
+        }
+        $donorCount = (int) $pdo->query('SELECT COUNT(*) FROM donors WHERE is_deleted = 0')->fetchColumn();
+
+        respond(['success' => true, 'types' => $types, 'components' => $components,
+                'statuses' => $statuses, 'total' => $total, 'donors' => $donorCount]);
 
     default:
         fail('Unknown read request.', 400);

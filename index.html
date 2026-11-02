@@ -587,7 +587,7 @@
                 <div class="bar-col"><span class="bar-pct">30%</span><div class="bar" style="--v:30"><span>O+</span></div></div>
                 <div class="bar-col"><span class="bar-pct">5%</span><div class="bar" style="--v:5"><span>O-</span></div></div>
               </div>
-              <p class="chart-note">Sample values shown.</p>
+              <p class="chart-note">Counts only bags with status Stored (in stock).</p>
             </article>
 
             <!-- Card 2: Total bags -->
@@ -596,7 +596,7 @@
                 <div class="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3" width="12" height="14" rx="3.5"/><path d="M10 6.2h4"/><path d="M12 17v4.5"/><path fill="currentColor" stroke="none" d="M12 8.8c-1.8 2-2.8 3.2-2.8 4.6a2.8 2.8 0 0 0 5.6 0c0-1.4-1-2.6-2.8-4.6Z"/></svg></div>
                 <div>
                   <h2>Total Bags Collected</h2>
-                  <p>All blood bags received from donors, counted across every blood type and component.</p>
+                  <p>Every bag on record, including Testing, Expired and Used. Select the arrow for a breakdown by status.</p>
                 </div>
                 <button class="card-link" data-detail="total" aria-label="View total bags details" title="View details">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 12 4M5.5 4H12v6.5"/></svg>
@@ -611,7 +611,7 @@
                 <div class="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 3h7"/><path d="M9.5 3v14.5a2.5 2.5 0 0 0 5 0V3"/><path d="M9.5 12h5"/></svg></div>
                 <div>
                   <h2>Bags by Component</h2>
-                  <p>Number of bags separated into red cells, plasma, and platelets.</p>
+                  <p>Bags in stock (status Stored), separated into red cells, plasma, and platelets.</p>
                 </div>
                 <button class="card-link" data-detail="components" aria-label="View component details" title="View details">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 12 4M5.5 4H12v6.5"/></svg>
@@ -791,44 +791,9 @@
         <p id="detail-desc"></p>
 
         <!-- Sample numbers: replace with real data -->
-        <div data-detail-body="types" hidden>
-          <table class="detail-list">
-            <caption class="sr-only">Bags in stock by blood type</caption>
-            <thead><tr><th scope="col">Blood type</th><th scope="col">Bags</th><th scope="col">Share</th><th scope="col">Stock</th></tr></thead>
-            <tbody>
-              <tr><td>A+</td><td>47</td><td>28%</td><td class="status">OK</td></tr>
-              <tr><td>A-</td><td>10</td><td>6%</td><td class="status pending">Low</td></tr>
-              <tr><td>B+</td><td>33</td><td>20%</td><td class="status">OK</td></tr>
-              <tr><td>B-</td><td>8</td><td>5%</td><td class="status pending">Low</td></tr>
-              <tr><td>AB+</td><td>7</td><td>4%</td><td class="status pending">Low</td></tr>
-              <tr><td>AB-</td><td>3</td><td>2%</td><td class="status pending">Low</td></tr>
-              <tr><td>O+</td><td>50</td><td>30%</td><td class="status">OK</td></tr>
-              <tr><td>O-</td><td>9</td><td>5%</td><td class="status pending">Low</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div data-detail-body="total" hidden>
-          <table class="detail-list">
-            <caption class="sr-only">Bags collected by week</caption>
-            <thead><tr><th scope="col">Period</th><th scope="col">Bags collected</th></tr></thead>
-            <tbody>
-              <tr><td>Week 1</td><td>38</td></tr>
-              <tr><td>Week 2</td><td>45</td></tr>
-              <tr><td>Week 3</td><td>41</td></tr>
-              <tr><td>Week 4</td><td>43</td></tr>
-              <tr><td><strong>Total</strong></td><td><strong>167</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div data-detail-body="components" hidden>
-          <div class="detail-text">
-            <div><strong>Red cells: 92 bags</strong><span>Carry oxygen. Used for surgery, trauma, and anemia.</span></div>
-            <div><strong>Plasma: 48 bags</strong><span>The liquid part of blood. Used for burns and clotting problems.</span></div>
-            <div><strong>Platelets: 27 bags</strong><span>Help blood clot. Used for cancer treatment and bleeding. They expire fastest.</span></div>
-          </div>
-        </div>
+        <div data-detail-body="types" hidden></div>
+        <div data-detail-body="total" hidden></div>
+        <div data-detail-body="components" hidden></div>
 
         <div class="dialog-actions">
           <button class="btn btn-ghost" data-close-detail>Close</button>
@@ -886,7 +851,7 @@
       var detail = document.getElementById("detail-dialog");
       var info = {
         types: ["Blood types", "Bags in stock for each blood group."],
-        total: ["Total bags collected", "Bags received from donors, by week."],
+        total: ["Total bags collected", "Every bag on record, grouped by status."],
         components: ["Bags by component", "What each component is and what it is used for."]
       };
       document.querySelectorAll("[data-detail]").forEach(function (b) {

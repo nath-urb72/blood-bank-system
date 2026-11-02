@@ -4,21 +4,23 @@
   var section = document.getElementById("dashboard");
   if (!section) return;
 
-  /* ---------- Settings & Sample Initial Data ---------- */
-  var LOW_SHARE = 10;
+  /* ---------- Settings & initial (empty) data ---------- */
+  var LOW_COUNT = 5;   // a blood type is "low" when fewer than this many bags are in stock
   var ORDER = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  var STATUS_NAMES = ["Stored", "Testing", "Expired", "Used"];
 
-  // Sample data restored
   var data = {
     types: { "A+": 0, "A-": 0, "B+": 0, "B-": 0, "AB+": 0, "AB-": 0, "O+": 0, "O-": 0 },
     components: { "Red cells": 0, "Plasma": 0, "Platelets": 0 },
-    total: 0
+    statuses: { "Stored": 0, "Testing": 0, "Expired": 0, "Used": 0 },
+    total: 0,
+    donors: 0
   };
 
   var COMP_INFO = {
-    "Red cells": "Carry oxygen. Used for surgery, trauma, and anemia. (Expires in 35-42 days)",
-    "Plasma": "The liquid part of blood. Used for burns and clotting problems. (Expires in 1 year)",
-    "Platelets": "Help blood clot. Used for cancer treatment and bleeding. (Expires fastest in 5 days)"
+    "Red cells": "Carry oxygen. Used for surgery, trauma, and anemia. Shelf life: 35 days.",
+    "Plasma": "The liquid part of blood. Used for burns and clotting problems. Shelf life: 1 year.",
+    "Platelets": "Help blood clot. Used for cancer treatment and bleeding. Shelf life: 5 days (the shortest)."
   };
 
   var state = { sort: "type", lowOnly: false, selected: null, comp: null };
@@ -107,7 +109,8 @@
     });
   });
 
-  function isLow(label) { return pct(data.types[label], sum(data.types)) < LOW_SHARE; }
+  /* ---------- Blood type chart ---------- */
+  function isLow(label) { return (data.types[label] || 0) < LOW_COUNT; }
 
   function drawTypes(animate) {
     var total = sum(data.types);
@@ -121,7 +124,7 @@
       var share = pct(n, total);
       var bar = $(".bar", col);
       $(".bar-pct", col).textContent = share + "%";
-      bar.classList.toggle("is-low", share < LOW_SHARE);
+      bar.classList.toggle("is-low", isLow(label));
       col.dataset.tip = label + ": " + n + " bags";
       bar.style.setProperty("--v", animate ? "0" : barValue(label));
     });
@@ -134,8 +137,19 @@
         });
       });
     }
+    updateChartLabel();
     applyOrderAndFilter();
     showTypeInfo();
+  }
+
+  /* screen-reader description that always matches the real numbers */
+  function updateChartLabel() {
+    var total = sum(data.types);
+    var lows = ORDER.filter(isLow);
+    chart.setAttribute("aria-label",
+      "Bar chart of bags in stock by blood type, " + total + " bags in total: " +
+      ORDER.map(function (l) { return l + " " + (data.types[l] || 0) + " (" + pct(data.types[l] || 0, total) + "%)"; }).join(", ") + "." +
+      (lows.length ? " Low stock: " + lows.join(", ") + "." : ""));
   }
 
   function applyOrderAndFilter() {
@@ -156,14 +170,14 @@
   function showTypeInfo() {
     var total = sum(data.types);
     if (state.selected) {
-      var n = data.types[state.selected], share = pct(n, total), low = share < LOW_SHARE;
+      var n = data.types[state.selected], share = pct(n, total), low = isLow(state.selected);
       typeInfo.innerHTML = "<strong>" + state.selected + "</strong>: " + n + " bags (" + share + "% of stock). " +
-        (low ? '<span class="low">Low stock, more donors needed.</span>' : '<span class="ok">Stock is OK.</span>');
+        (low ? '<span class="low">Low stock (under ' + LOW_COUNT + ' bags), more donors needed.</span>' : '<span class="ok">Stock is OK.</span>');
       return;
     }
     var lows = ORDER.filter(isLow);
     typeInfo.innerHTML = lows.length
-      ? "<strong>" + lows.length + " blood type" + (lows.length > 1 ? "s are" : " is") + " low:</strong> " +
+      ? "<strong>" + lows.length + " blood type" + (lows.length > 1 ? "s are" : " is") + " low (under " + LOW_COUNT + " bags):</strong> " +
         lows.join(", ") + ". Select a bar for details."
       : "All blood types are well stocked. Select a bar for details.";
   }
@@ -256,9 +270,47 @@
     markComponents();
   }
 
-  /* ---------- Fetch Live API Statistics (With Sample Data Fallback) ---------- */
+  /* ---------- Detail dialogs (opened by the arrow buttons in index.html) ---------- */
+  function renderDetails() {
+    var typesBox = document.querySelector('[data-detail-body="types"]');
+    var totalBox = document.querySelector('[data-detail-body="total"]');
+    var compBox = document.querySelector('[data-detail-body="components"]');
+    var stored = sum(data.types);
+
+    if (typesBox) {
+      typesBox.innerHTML =
+        '<table class="detail-list"><caption class="sr-only">Bags in stock by blood type</caption>' +
+        '<thead><tr><th scope="col">Blood type</th><th scope="col">Bags</th><th scope="col">Share</th><th scope="col">Stock</th></tr></thead><tbody>' +
+        ORDER.map(function (l) {
+          var n = data.types[l] || 0, low = isLow(l);
+          return "<tr><td>" + l + "</td><td>" + n + "</td><td>" + pct(n, stored) + '%</td><td class="status' +
+            (low ? " pending" : "") + '">' + (low ? "Low" : "OK") + "</td></tr>";
+        }).join("") +
+        "</tbody></table>" +
+        '<p class="comp-info">Counts only bags with status Stored. Low means fewer than ' + LOW_COUNT + " bags.</p>";
+    }
+
+    if (totalBox) {
+      totalBox.innerHTML =
+        '<table class="detail-list"><caption class="sr-only">All bags by status</caption>' +
+        '<thead><tr><th scope="col">Status</th><th scope="col">Bags</th></tr></thead><tbody>' +
+        STATUS_NAMES.map(function (s) { return "<tr><td>" + s + "</td><td>" + (data.statuses[s] || 0) + "</td></tr>"; }).join("") +
+        "<tr><td><strong>Total</strong></td><td><strong>" + data.total + "</strong></td></tr>" +
+        "</tbody></table>" +
+        '<p class="comp-info">Only Stored bags appear in the blood type chart and the component totals. ' +
+        "Registered donors: " + data.donors + ".</p>";
+    }
+
+    if (compBox) {
+      compBox.innerHTML = '<div class="detail-text">' + compNames.map(function (name) {
+        return "<div><strong>" + name + ": " + (data.components[name] || 0) + " bags in stock</strong><span>" + COMP_INFO[name] + "</span></div>";
+      }).join("") + "</div>";
+    }
+  }
+
+  /* ---------- Fetch Live Statistics ---------- */
   function fetchStatsAndRender() {
-      fetch('backend/read.php?what=stats')
+    fetch('backend/read.php?what=stats')
       .then(function (res) {
         if (!res.ok) throw new Error("API status: " + res.status);
         return res.json();
@@ -267,15 +319,19 @@
         if (!stats || !stats.success) throw new Error("Stats unavailable");
         ORDER.forEach(function (k) { data.types[k] = Number(stats.types[k]) || 0; });
         compNames.forEach(function (k) { data.components[k] = Number(stats.components[k]) || 0; });
+        STATUS_NAMES.forEach(function (k) { data.statuses[k] = Number((stats.statuses || {})[k]) || 0; });
         data.total = Number(stats.total) || 0;
+        data.donors = Number(stats.donors) || 0;
         var animate = !reduceMotion();
         drawTypes(animate);
         drawComponents(animate);
         drawTotal(true);
+        renderDetails();
+        document.dispatchEvent(new CustomEvent("bb:stats", { detail: window.BloodBankDashboard.getData() }));
       })
       .catch(function (err) {
         console.warn("Could not load stats:", err);
-        drawTypes(false); drawComponents(false); drawTotal(false);
+        drawTypes(false); drawComponents(false); drawTotal(false); renderDetails();
       });
   }
 
@@ -287,14 +343,16 @@
       drawTypes(false);
       drawComponents(false);
       drawTotal(false);
+      renderDetails();
     },
     getData: function () { return JSON.parse(JSON.stringify(data)); }
   };
 
-  /* Render Initial Dashboard */
+  /* Render Initial Dashboard (empty until the server answers) */
   drawTypes(false);
   drawComponents(false);
   drawTotal(false);
+  renderDetails();
 
   var wasActive = section.classList.contains("active");
   new MutationObserver(function () {

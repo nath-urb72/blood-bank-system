@@ -24,9 +24,11 @@
     // 5. Inject an Interactive Quick FAQ Accordion
     injectFAQSection(aboutSection);
 
-    // 6. Listen for Hash / Navigation Changes to trigger animations
-    window.addEventListener('hashchange', checkAndAnimate);
-    checkAndAnimate();
+    // 6. Live stats: update when the dashboard announces numbers; refresh whenever About is opened
+    document.addEventListener('bb:stats', function (e) { setStats(e.detail); });
+    window.addEventListener('hashchange', function () {
+      if (location.hash === '#about' && window.BloodBankDashboard) BloodBankDashboard.refresh();
+    });
   }
 
   // Run immediately or when ready
@@ -226,20 +228,20 @@
     statsDiv.className = 'about-stats-banner';
     statsDiv.innerHTML = `
       <div class="stat-box">
-        <div class="stat-number" data-target="500">0</div>
-        <div class="stat-label">Donors Registered</div>
+        <div class="stat-number" data-key="donors">0</div>
+        <div class="stat-label">Donors registered</div>
       </div>
       <div class="stat-box">
-        <div class="stat-number" data-target="100" data-suffix="%">0</div>
-        <div class="stat-label">Stock Accuracy</div>
+        <div class="stat-number" data-key="total">0</div>
+        <div class="stat-label">Bags collected</div>
       </div>
       <div class="stat-box">
-        <div class="stat-number" data-target="24" data-suffix="/7">0</div>
-        <div class="stat-label">Live Monitoring</div>
+        <div class="stat-number" data-key="stored">0</div>
+        <div class="stat-label">Bags in stock</div>
       </div>
       <div class="stat-box">
-        <div class="stat-number" data-target="167">0</div>
-        <div class="stat-label">Bags in Stock</div>
+        <div class="stat-number" data-key="expired">0</div>
+        <div class="stat-label">Bags expired</div>
       </div>
     `;
     heroCard.appendChild(statsDiv);
@@ -329,8 +331,8 @@
     widget.className = 'interactive-widget-card';
 
     widget.innerHTML = `
-      <div class="widget-title">Interactive Blood Type Compatibility Tool</div>
-      <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 14px;">Select a blood type to inspect universal donor/recipient compatibility rules:</p>
+      <div class="widget-title">Red Blood Cell Compatibility Tool</div>
+      <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 14px;">Select a blood type to see which red cell donations it can give and receive. Plasma and platelets follow different rules.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="type-btn-container">
         ${Object.keys(compatData).map((type, idx) => `
           <button type="button" class="type-selector-btn ${idx === 0 ? 'active' : ''}" data-type="${type}">${type}</button>
@@ -338,11 +340,11 @@
       </div>
       <div class="compat-results">
         <div class="compat-pill-box">
-          <h4>Can Give Blood To</h4>
+          <h4>Can Give Red Cells To</h4>
           <div class="pill-tags" id="compat-give"></div>
         </div>
         <div class="compat-pill-box">
-          <h4>Can Receive Blood From</h4>
+          <h4>Can Receive Red Cells From</h4>
           <div class="pill-tags" id="compat-receive"></div>
         </div>
       </div>
@@ -375,8 +377,8 @@
     if (document.getElementById('about-faq-widget')) return;
 
     const faqs = [
-      { q: "How often can donors donate blood?", a: "Whole blood donors can typically donate every 56 days (8 weeks)." },
-      { q: "How are blood bags assigned to patients?", a: "Blood units are filtered by blood type compatibility, component need, and expiration dates." }
+      { q: "How often can donors donate blood?", a: "Whole blood donors usually need to wait at least 8 to 12 weeks between donations. The exact interval depends on local guidelines." },
+      { q: "Does this system assign blood bags to patients?", a: "No. It tracks inventory only. In practice, staff match units to patients by blood type compatibility, the component needed, and expiry date, and the filters on the Database tab help find suitable bags." }
     ];
 
     const faqCard = document.createElement('article');
@@ -389,7 +391,7 @@
       <div style="margin-top: 10px;">
         ${faqs.map((faq) => `
           <div class="faq-item">
-            <button type="button" class="faq-trigger">
+            <button type="button" class="faq-trigger" aria-expanded="false">
               <span>${faq.q}</span>
               <span class="faq-icon">+</span>
             </button>
@@ -406,39 +408,41 @@
       btn.addEventListener('click', () => {
         const item = btn.closest('.faq-item');
         const isOpen = item.classList.contains('open');
-        faqCard.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-        if (!isOpen) item.classList.add('open');
+        faqCard.querySelectorAll('.faq-item').forEach(i => {
+          i.classList.remove('open');
+          i.querySelector('.faq-trigger').setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
       });
     });
   }
 
-  let animated = false;
-  function checkAndAnimate() {
-    if ((location.hash === '#about' || location.hash === '') && !animated) {
-      animateStats();
-      animated = true;
-    }
+  /* ---------- Live stats ---------- */
+  function setStats(d) {
+    var s = d.statuses || {};
+    var values = { donors: d.donors, total: d.total, stored: s.Stored, expired: s.Expired };
+    document.querySelectorAll('#about-stats-banner .stat-number').forEach(function (el) {
+      countTo(el, Number(values[el.dataset.key]) || 0);
+    });
   }
 
-  function animateStats() {
-    const numbers = document.querySelectorAll('#about-stats-banner .stat-number');
-    numbers.forEach(el => {
-      const target = parseInt(el.dataset.target, 10);
-      const suffix = el.dataset.suffix || '+';
-      if (isNaN(target)) return;
+  function countTo(el, target) {
+    clearInterval(el._timer);
+    var reduce = document.documentElement.getAttribute('data-motion') === 'reduce' ||
+      (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var current = parseInt(el.textContent, 10) || 0;
+    if (reduce || current === target) { el.textContent = target; return; }
 
-      let current = 0;
-    const step = Math.max(1, Math.ceil(target / 25));
-    const interval = setInterval(() => {
-        current += step;
-        if (current >= target) {
-          el.textContent = target + suffix;
-          clearInterval(interval);
-        } else {
-          el.textContent = current + suffix;
-        }
-      }, 30);
-    });
+    var dir = target > current ? 1 : -1;
+    var step = Math.max(1, Math.ceil(Math.abs(target - current) / 25));
+    el._timer = setInterval(function () {
+      current += dir * step;
+      if ((dir > 0 && current >= target) || (dir < 0 && current <= target)) {
+        current = target;
+        clearInterval(el._timer);
+      }
+      el.textContent = current;
+    }, 30);
   }
 
 })();
