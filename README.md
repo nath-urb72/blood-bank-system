@@ -81,6 +81,7 @@ blood-management-system/
 ├── index.html            # Single-page frontend (login, dashboard, database, about)
 ├── database.sqlite       # Created by config/setup_db.php
 ├── assets/
+│   ├── css/              # style.css
 │   ├── images/
 │   └── js/               # about.js, dashboard.js, database.js
 ├── backend/
